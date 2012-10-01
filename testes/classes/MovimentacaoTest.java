@@ -28,7 +28,7 @@ public class MovimentacaoTest {
 	public void sacarComSucesso() {
 		try {
 			// DADO QUE EU QUEIRA SACAR 20 REAIS, E TENHA SALDO SUFICIENTE
-			Conta poupanca = new Conta();
+			Conta poupanca = new Poupanca();
 			poupanca.setSaldo(SALDO_CONTA);			
 			BigDecimal valorSacado = VALOR_TRANSACAO;
 			movimentacao = new Saque();
@@ -48,7 +48,7 @@ public class MovimentacaoTest {
 	public void depositarComSucesso() {
 		try {
 			// DADO QUE EU QUEIRA DEPOSITAR 20 REAIS
-			Conta poupanca = new Conta();
+			Conta poupanca = new Poupanca();
 			poupanca.setSaldo(SALDO_CONTA);			
 			BigDecimal valorDeposito = VALOR_TRANSACAO;
 			movimentacao = new Deposito();
@@ -68,7 +68,7 @@ public class MovimentacaoTest {
 	public void depositarPassandoValorNulo() {
 		try {
 			// DADO QUE EU QUEIRA DEPOSITAR UM VALOR NULO A MINHA CONTA NÃO DEVE SE ALTERAR
-			Conta poupanca = new Conta();
+			Conta poupanca = new Poupanca();
 			poupanca.setSaldo(SALDO_CONTA);			
 			BigDecimal valorDeposito = null;
 			movimentacao = new Deposito();
@@ -88,7 +88,7 @@ public class MovimentacaoTest {
 	public void sacarSemSaldo() {
 		try {
 			// DADO QUE EU QUEIRA SACAR 20 REAIS, E TENHA SALDO INSUFICIENTE
-			Conta poupanca = new Conta();
+			Conta poupanca = new Poupanca();
 			poupanca.setSaldo(new BigDecimal(0));
 			BigDecimal valorSacado = VALOR_TRANSACAO;
 			movimentacao = new Saque();

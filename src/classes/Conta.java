@@ -1,10 +1,20 @@
 package classes;
 
 import java.math.BigDecimal;
+import java.util.Random;
 
-public class Conta {
+public abstract class Conta implements Entidade{
 
 	private BigDecimal saldo;
+	private Integer numero;
+
+	
+	
+	public Conta() {
+		super();
+		Random gerador = new Random();
+		this.numero = gerador.nextInt(900000);
+	}
 
 	public void setSaldo(BigDecimal saldoConta) {
 		saldo = saldoConta;
@@ -28,6 +38,11 @@ public class Conta {
 		if(valorDeposito != null){
 			saldo = saldo.add(valorDeposito);
 		}
+	}
+
+	@Override
+	public Integer getCodigo() {
+		return numero;
 	}
 
 }
