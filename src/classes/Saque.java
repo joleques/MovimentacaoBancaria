@@ -6,7 +6,7 @@ public class Saque extends TransacaoBancaria{
 
 
 	private void sacar(BigDecimal valorSacado) throws Exception {
-		conta.sacar(valorSacado);
+		contaOrigem.sacar(valorSacado);
 	}
 
 	@Override
