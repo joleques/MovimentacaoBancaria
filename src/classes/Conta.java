@@ -7,6 +7,7 @@ public abstract class Conta implements Entidade{
 
 	private BigDecimal saldo;
 	private Integer numero;
+	private String nome;
 
 	
 	
@@ -38,6 +39,15 @@ public abstract class Conta implements Entidade{
 		if(valorDeposito != null){
 			saldo = saldo.add(valorDeposito);
 		}
+	}
+	
+
+	public String getNome() {
+		return nome;
+	}
+
+	public void setNome(String nome) {
+		this.nome = nome;
 	}
 
 	@Override

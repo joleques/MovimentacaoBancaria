@@ -26,6 +26,7 @@ public class ServicoControleRendimento implements Runnable {
 					for (int i = 1; i <= totalContas; i++) {
 						Poupanca conta = banco.getPopanca();
 						conta.adicionarReajusteMensal(percentualDeReajuste);
+						mostrarRendimentoPoupanca(conta);
 						lista.add(conta);
 					}
 					banco.setPoupanca(lista);
@@ -34,6 +35,15 @@ public class ServicoControleRendimento implements Runnable {
 				}
 			}
 		}
+	}
+	
+	private void mostrarRendimentoPoupanca(Poupanca conta){
+		System.out.println("\n Rendimento Mensal Poupança");
+		System.out.println("\n *****************************************");
+		System.out.println("Conta : "+ conta.getCodigo());
+		System.out.println("Nome : "+ conta.getNome());
+		System.out.println("Saldo : "+ conta.getSaldo());
+		System.out.println("\n *****************************************");
 	}
 
 }

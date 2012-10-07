@@ -1,6 +1,9 @@
 package classes;
 
 import java.math.BigDecimal;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import junit.framework.Assert;
 
@@ -110,11 +113,12 @@ public class MovimentacaoTest {
 	@Test
 	public void deveTransferir20ReaisDaContaCorrenteParaContaPoupanca() {
 		try {
-			ContaCorrente contaOrigem = criarContaCorrente();
-			Poupanca contaDestino = criarContaPoupanca();
+			ContaCorrente contaOrigem = criarContaCorrente(SALDO_CONTA, null);
+			Poupanca contaDestino = criarContaPoupanca(SALDO_CONTA, null);
 
 			movimentacao = new Transferencia(contaOrigem, contaDestino);
-			quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(contaOrigem, contaDestino);
+			quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(
+					contaOrigem, contaDestino);
 		} catch (Exception e) {
 			Assert.fail("Não podia ter falhado o saque pois o deposito esta ok.");
 		}
@@ -123,11 +127,12 @@ public class MovimentacaoTest {
 	@Test
 	public void deveTransferir20ReaisDaContaPoupancaParaContaCorrente() {
 		try {
-			Poupanca contaOrigem = criarContaPoupanca();
-			ContaCorrente contaDestino = criarContaCorrente();
+			Poupanca contaOrigem = criarContaPoupanca(SALDO_CONTA, null);
+			ContaCorrente contaDestino = criarContaCorrente(SALDO_CONTA, null);
 
-			movimentacao = new Transferencia(contaOrigem,contaDestino);
-			quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(contaOrigem, contaDestino);
+			movimentacao = new Transferencia(contaOrigem, contaDestino);
+			quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(
+					contaOrigem, contaDestino);
 		} catch (Exception e) {
 			Assert.fail("Não podia ter falhado o saque pois o deposito esta ok.");
 		}
@@ -136,36 +141,109 @@ public class MovimentacaoTest {
 	@Test
 	public void deveTransferir20ReaisDaContaCorrenteParaContaCorrente() {
 		try {
-			ContaCorrente contaOrigem = criarContaCorrente();
-			ContaCorrente contaDestino = criarContaCorrente();
+			ContaCorrente contaOrigem = criarContaCorrente(SALDO_CONTA, null);
+			ContaCorrente contaDestino = criarContaCorrente(SALDO_CONTA, null);
 
-			movimentacao = new Transferencia(contaOrigem,contaDestino);
-			quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(contaOrigem, contaDestino);
+			movimentacao = new Transferencia(contaOrigem, contaDestino);
+			quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(
+					contaOrigem, contaDestino);
 		} catch (Exception e) {
 			Assert.fail("Não podia ter falhado o saque pois o deposito esta ok.");
 		}
 	}
 
-	private ContaCorrente criarContaCorrente() {
+	@Test
+	public void deveRealizarTodasTransacoesEmDiversasContasPor30Segundos() {
+		try {
+			Banco santander = new Banco();
+			ArrayBlockingQueue<Poupanca> listaPoupancas = new ArrayBlockingQueue<Poupanca>(2);
+			
+			Poupanca poupancaJoao = criarContaPoupanca(new BigDecimal(100.0), "Joao Paulo");
+			listaPoupancas.put(poupancaJoao);
+			
+			Poupanca poupancaPaulo = criarContaPoupanca(new BigDecimal(200.0), "Paulo Roberto");
+			listaPoupancas.put(poupancaPaulo);
+
+			santander.setPoupanca(listaPoupancas);
+			
+			ContaCorrente contaMarina = criarContaCorrente(new BigDecimal(300.0), "Marina Silva");
+			santander.setContaCorrente(contaMarina);
+			
+			ContaCorrente contaMarcia = criarContaCorrente(new BigDecimal(250.0), "Marcia Sorrentino");
+			santander.setContaCorrente(contaMarcia);
+			
+			ServicoControleRendimento servicoRendimentoDaPoupanca = new ServicoControleRendimento(santander);			
+			ServicoTransacoes servicoTransacoes = new ServicoTransacoes();
+			
+			
+			ExecutorService executarAplicacao = Executors.newCachedThreadPool();
+			executarAplicacao.execute(servicoRendimentoDaPoupanca);
+			
+			for (int i = 0; i < 15; i++) {
+				Thread.sleep(2000);
+				realizarDeposito(contaMarcia, new BigDecimal(2.0), servicoTransacoes);			
+				realizarSaque(poupancaPaulo,new BigDecimal(1.0), servicoTransacoes);			
+				realizarTransferencia(poupancaJoao, contaMarina,new BigDecimal(1.5), servicoTransacoes);
+				executarAplicacao.execute(servicoTransacoes);
+				
+				printDadosConta(poupancaJoao);
+				printDadosConta(poupancaPaulo);
+				printDadosConta(contaMarina);
+				printDadosConta(contaMarcia);
+			}
+			executarAplicacao.shutdown();
+			
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+
+	}
+
+	private void printDadosConta(Conta poupancaJoao) {
+		System.out.println("Conta : "+ poupancaJoao.getCodigo());
+		System.out.println("Nome : "+ poupancaJoao.getNome());
+		System.out.println("Saldo : "+ poupancaJoao.getSaldo());
+		System.out.println("\n ----------------------------------------");
+	}
+
+	private void realizarTransferencia(Poupanca contaDestino,
+			ContaCorrente contaOrigem, BigDecimal valor, ServicoTransacoes servicoTransacoes) {
+		Transferencia transferencia = new Transferencia(contaOrigem, contaDestino);
+		servicoTransacoes.setTransacao(transferencia,valor);
+	}
+
+	private void realizarSaque(Conta conta,BigDecimal valor, ServicoTransacoes servicoTransacoes) {
+		Saque saque = new Saque();
+		saque.setContaOrigem(conta);
+		servicoTransacoes.setTransacao(saque, valor);
+	}
+
+	private void realizarDeposito(Conta conta,BigDecimal valor, ServicoTransacoes servicoTransacoes) {
+		Deposito deposito = new Deposito();
+		deposito.setContaOrigem(conta);
+		servicoTransacoes.setTransacao(deposito,valor);
+	}
+
+	private ContaCorrente criarContaCorrente(BigDecimal saldo, String nomeProprietario) {
 		ContaCorrente contaOrigem = new ContaCorrente();
-		contaOrigem.setSaldo(SALDO_CONTA);
+		contaOrigem.setSaldo(saldo);
+		contaOrigem.setNome(nomeProprietario);
 		return contaOrigem;
 	}
 
-	private void quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(Conta contaOrigem, Conta contaDestino)
-			throws Exception {
+	private Poupanca criarContaPoupanca(BigDecimal saldo, String nomeProprietario) {
+		Poupanca poupanca = new Poupanca();
+		poupanca.setSaldo(saldo);
+		poupanca.setNome(nomeProprietario);
+		return poupanca;
+	}
+	
+	private void quandoExecutarAhMovimentacaoAhTransferenciaDeveTerSidoExecutadoComSucesso(Conta contaOrigem, Conta contaDestino) throws Exception {
 		BigDecimal valorTransferir = VALOR_TRANSACAO;
 		movimentacao.executar(valorTransferir);
 		Assert.assertEquals((SALDO_CONTA.add(VALOR_TRANSACAO)),contaDestino.getSaldo());
 		Assert.assertEquals((SALDO_CONTA.subtract(VALOR_TRANSACAO)),contaOrigem.getSaldo());
 	}
-
-	private Poupanca criarContaPoupanca() {
-		Poupanca poupanca = new Poupanca();
-		poupanca.setSaldo(SALDO_CONTA);
-		return poupanca;
-	}
-
 
 
 }
